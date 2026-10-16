@@ -39,9 +39,13 @@
 \newif\if@isContentHeader
 \newif\if@isBibHeader
 \newif\if@isKrabst
-\newif\if@isKrack
 \newif\if@isAsym
 \newif\if@isLibrary
+\newif\if@isScience
+\newif\if@isDedication
+\newif\if@isPreface
+\newif\if@isNomenclature
+\newif\if@isChapterInline
 
 
 %% 새 옵션 모음 - doctor|master, final|draft
@@ -52,10 +56,13 @@
 \DeclareOption{debug}        {\@isDebugtrue}
 \DeclareOption{twosides}     {\@isTwosidestrue}
 \DeclareOption{oneside}      {\@isTwosidesfalse}
-\DeclareOption{krabst}       {\@isKrabsttrue}
-\DeclareOption{krack}        {\@isKracktrue}
+\DeclareOption{krabst}       {\@isKrabsttrue} % 국문초록 (규정상 영문논문도 필수)
 \DeclareOption{asym}         {\@isAsymtrue}
 \DeclareOption{library}      {\@isLibrarytrue}
+\DeclareOption{science}      {\@isSciencetrue} % 석사 학위명을 Master of Science로 표기 (기본값)
+\DeclareOption{arts}         {\@isSciencefalse} % 석사 학위명을 Master of Arts로 표기
+\DeclareOption{chapterinline}  {\@isChapterInlinetrue}  % "Chapter N. 제목"을 한 줄로 표기 (기본값)
+\DeclareOption{chapterstacked} {\@isChapterInlinefalse} % "Chapter N" / "제목"을 두 줄로 표기 (LaTeX 기본 스타일)
 
 
 %% leqno,fleqn,openbib 옵션은 그대로 report 클래스에 전달
@@ -72,9 +79,13 @@
 \@isContentHeaderfalse
 \@isBibHeaderfalse
 \@isKrabstfalse
-\@isKrackfalse
 \@isAsymfalse
 \@isLibraryfalse
+\@isSciencetrue
+\@isDedicationfalse
+\@isPrefacefalse
+\@isNomenclaturefalse
+\@isChapterInlinetrue
 \ProcessOptions
 
 %% 11pt,onecolumn,oneside 옵션으로 report 클래스 불러오기
@@ -82,6 +93,17 @@
   \LoadClass[11pt,onecolumn,twoside,openright]{report}
 \else
   \LoadClass[11pt,onecolumn,oneside]{report}
+\fi
+
+%% \chapter 제목 스타일: "Chapter N. 제목"을 한 줄로(chapterinline, 기본값) 표기할지,
+%% LaTeX 기본 스타일대로 "Chapter N" / "제목"을 두 줄로(chapterstacked) 표기할지 선택
+\RequirePackage{titlesec}
+\if@isChapterInline
+  \titleformat{\chapter}[hang]{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter.}{20pt}{}
+  \titlespacing*{\chapter}{0pt}{50pt}{40pt}
+\else
+  \titleformat{\chapter}[display]{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\huge\bfseries}
+  \titlespacing*{\chapter}{0pt}{50pt}{40pt}
 \fi
 
 
@@ -94,8 +116,10 @@
 \usepackage{tocbibind}
 
 %% 편집용지 설정 (4x6 배판 - 190x260 mm2)
+%% 규정: 초록부터 좌우 여백은 최소 2cm(20mm) 이상이어야 하므로,
+%% 제본용 여백(asym)을 적용해도 바깥쪽(outer) 여백은 20mm 밑으로 내려가지 않게 한다.
 \if@isAsym
-  \usepackage[inner = 25mm ,       outer = 15mm,
+  \usepackage[inner = 25mm ,       outer = 20mm,
                 top = 30mm,       bottom = 30mm,
          paperwidth = 190mm, paperheight = 260mm]{geometry}
 \else
@@ -117,6 +141,7 @@
 \bibliographystyle{ieeetr}
 
 \RequirePackage{ifthen}       % 추가 패키지 설정
+\RequirePackage{xparse}       % 선택적 인수(한글 이름/제목 등) 처리용
 \RequirePackage[strict]{changepage}
 \RequirePackage{emptypage}
 \RequirePackage{graphicx} % xcolor
@@ -180,11 +205,23 @@
     \if@isKrabst
       \makekrabstract
     \fi
-    \makeacknowledgement
+  \fi
+  \if@isDedication                         % 감사의 글(Dedication page, 선택)
+    \makededication
+  \fi
+  \if@isPreface                            % 서문(Preface, 필요시)
+    \makepreface
+  \fi
+  \if@isFinal
+    \makeacknowledgement                   % 사사(Acknowledgments)
   \fi
   %\pagenumbering{roman}                   % 2020년 2월 졸업논문 제출시 과학도서관 지적사항
-  %\setcounter{page}{1}                    % 
+  %\setcounter{page}{1}                    %
   \makecontents
+
+  \if@isNomenclature                       % 기호설명(Nomenclature, 선택)
+    \makenomenclature
+  \fi
 
   \pagenumbering{arabic}
   \setcounter{page}{1}
@@ -203,16 +240,27 @@
 %% 고려대학교 공식 영문명칭
 \newcommand{\@koreauniv}{Korea University}
 
+%% 목차 제목 변경 (규정에서 고정된 표현은 아니므로 자유롭게 수정 가능)
+\renewcommand{\contentsname}{Table of Contents}
+
 %% 소속 대학원 이름 표기 (기본값: 일반 대학원)
-\newcommand{\graduateSchool}[3] {
-    \newcommand{\@departmentNameKor}{#1}
-    \newcommand{\@departmentNameEng}{#2}
-    \newcommand{\@graduateSchoolName}{#3}
+% #1 영문 학과명, #2 대학원 이름, #3(선택) 국문 학과명 - krabst(국문초록) 헤더에만 사용되며,
+% 생략시 영문 학과명을 그대로 사용한다.
+\NewDocumentCommand{\graduateSchool}{m m o} {
+    \newcommand{\@departmentNameEng}{#1}
+    \newcommand{\@graduateSchoolName}{#2}
+    \IfValueTF{#3}{
+      \newcommand{\@departmentNameKor}{#3}
+    }{
+      \newcommand{\@departmentNameKor}{#1}
+    }
 }
 \@onlypreamble{\graduateSchool}
 
 % @command title 논문 제목
-\renewcommand{\title}[3] {
+% #1 제목 크기 설정값, #2 영문 제목, #3(선택) 국문 제목 - krabst(국문초록)에만 사용되며,
+% 생략시 영문 제목을 그대로 사용한다.
+\RenewDocumentCommand{\title}{m m o} {
   \ifnum#1=3
     \newcommand{\@titleSize}{19pt}
     \newcommand{\@univSize}{18pt}
@@ -230,106 +278,70 @@
     \fi
   \fi
   \newcommand{\@titleEng}{#2}
-  \newcommand{\@titleKor}{#3}
+  \IfValueTF{#3}{
+    \newcommand{\@titleKor}{#3}
+  }{
+    \newcommand{\@titleKor}{#2}
+  }
 }
 \@onlypreamble{\title}
 
 % @command author 저자 이름
-% @param family_name, given_name 성, 이름을 구분해서 입력
-% @options [default: (none)]
-% - korean: 한글이름 | chinese: 한문이름 | english: 영문이름
-\renewcommand{\author}[4][chinese] {%
-    \ifthenelse{\equal{#1}{chinese}}
-        {\newcommand{\@authorChnF}{#2}
-         \newcommand{\@authorChnS}{#3}
-         \newcommand{\@authorChnT}{#4}
-         \ifthenelse{\equal{#4}{}}{
-           \newcommand{\@authorChn}{#2#3}
-         }{
-           \newcommand{\@authorChn}{#2#3#4}
-         }{}%
-         \ifthenelse{\equal{#4}{}}{
-           \newcommand{\@authorChnSpace}{#2\ #3}
-         }{
-           \newcommand{\@authorChnSpace}{#2\ #3\ #4}
-         }}{}%
-    \ifthenelse{\equal{#1}{english}}
-        {\newcommand{\@authorEngFN}{#2}
-         \newcommand{\@authorEngGN}{#3}
-         \ifthenelse{\equal{#4}{}}{
-           \newcommand{\@authorEng}{#3\ #2}
-         }{
-           \newcommand{\@authorEng}{#3\ #4\ #2}
-         }}{}%
-    \ifthenelse{\equal{#1}{korean}}
-        {
-        \ifthenelse{\equal{#4}{}}{
-           \newcommand{\@authorKorSpace}{#2\ #3}
-           \newcommand{\@authorKor}{#2#3}
-         }{
-           \newcommand{\@authorKorSpace}{#2\ #3\ #4}
-           \newcommand{\@authorKor}{#2#3#4}
-         }
-         }{}%
+% #1 성(family name), #2 이름(given name), #3(선택) 국문 성명 - krabst(국문초록) 헤더에만
+% 사용되며, 생략시 영문 이름을 그대로 사용한다.
+\RenewDocumentCommand{\author}{m m o} {%
+    \newcommand{\@authorEngFN}{#1}
+    \newcommand{\@authorEngGN}{#2}
+    \newcommand{\@authorEng}{#2\ #1}
+    \IfValueTF{#3}{
+      \newcommand{\@authorKorSpace}{#3}
+    }{
+      \newcommand{\@authorKorSpace}{\@authorEng}
+    }
 }
 \@onlypreamble{\author}
 
 % 현재는 주 지도교수만 지원
-% @command advisor 지도교수 이름 (복수가능)
-% @options [default: major]
-% - major: 주 지도교수  | coopr: 부 지도교수 (공동지도교수 경우)
-\newcommand{\advisor}[3]{%
-  \newcommand{\@advisorMajorKor}{#1}  % 한글이름 저장
-  \newcommand{\@advisorMajorChn}{#2}  % 영문이름 저장
-  \newcommand{\@advisorMajorEng}{#3}  % 영문이름 저장
+% @command advisor 지도교수 이름
+% #1 영문 이름, #2(선택) 국문 이름 - krabst(국문초록) 헤더에만 사용되며,
+% 생략시 영문 이름을 그대로 사용한다.
+\NewDocumentCommand{\advisor}{m o}{%
+  \newcommand{\@advisorMajorEng}{#1}
+  \IfValueTF{#2}{
+    \newcommand{\@advisorMajorKor}{#2}
+  }{
+    \newcommand{\@advisorMajorKor}{#1}
+  }
 }
 \@onlypreamble{\advisor}
 
 \if@isDoctor
-  \newcommand{\@degreeChn}{博}
   \newcommand{\@degreeEng}{Doctor}
-  \newcommand{\@degreeKor}{박}
   \newcommand{\@degreeFullName}{Doctor of Philosophy}
   \newcommand{\@paperKind}{Dissertation} % 미국계열과 영국계열에 따라 박사학위, 석사학위, 학사학위 논문을 Dissertation / Thesis 호칭이 달라지나 일반대학원 양식에 따라 박사는 Dissertation, 석사는 Thesis 로 한다
   \newcommand{\@paperKindLower}{dissertation}
 \else
-  \newcommand{\@degreeChn}{碩}
   \newcommand{\@degreeEng}{Master}
-  \newcommand{\@degreeKor}{석}
-  \newcommand{\@degreeFullName}{Master of Arts}
+  \if@isScience
+    \newcommand{\@degreeFullName}{Master of Science}
+  \else
+    \newcommand{\@degreeFullName}{Master of Arts}
+  \fi
   \newcommand{\@paperKind}{Thesis} % 미국계열과 영국계열에 따라 박사학위, 석사학위, 학사학위 논문을 Dissertation / Thesis 호칭이 달라지나 일반대학원 양식에 따라 박사는 Dissertation, 석사는 Thesis 로 한다
   \newcommand{\@paperKindLower}{thesis}
 \fi
 
-% @command department 
-%
+% @command department (legacy shortcut; \graduateSchool의 1번째 인수로 대체 가능)
 \newcommand{\department}[2] {%
     \ifthenelse{\equal{#1}{PH}}
-        {\newcommand{\@deptNameEng}{Physics}
-         \newcommand{\@deptNameChn}{物\ 理\ 學\ 科}
-         \newcommand{\@deptNameKor}{물리학과}
-         \newcommand{\@deptNameShort}{物理學}
-         \newcommand{\@degreeName}{理學}} {}
+        {\newcommand{\@deptNameEng}{Physics}} {}
     \ifthenelse{\equal{#1}{CRCE}}
         {\newcommand{\@deptNameEng}{Computer and Radio Communications Engineering}
-         \newcommand{\@deptNameChn}{컴\ 퓨\ 터\ $\cdot$\ 電\ 波\ 通\ 信\ 工\ 學\ 科}
-         \newcommand{\@deptNameKor}{컴퓨터$\cdot$전파통신공학과}
-         \newcommand{\@deptNameShort}{컴퓨터$\cdot$電波通信工學}
-         \newcommand{\@degreeName}{컴퓨터$\cdot$電波通信工學}
          \@isLongDeptNametrue} {}
     \ifthenelse{\equal{#1}{CSE}}
-        {\newcommand{\@deptNameEng}{Computer Science Engineering}
-         \newcommand{\@deptNameChn}{컴\ 퓨\ 터\ 學\ 科}
-         \newcommand{\@deptNameKor}{컴퓨터학과}
-         \newcommand{\@deptNameShort}{컴퓨터學}
-         \newcommand{\@degreeName}{컴퓨터學}} {}
+        {\newcommand{\@deptNameEng}{Computer Science Engineering}} {}
     \ifthenelse{\equal{#1}{IS}}
-        {\newcommand{\@deptNameEng}{Information Security}
-         \newcommand{\@deptNameChn}{정\ 보\ 보\ 호\ 學\ 科}
-         \newcommand{\@deptNameKor}{정\ 보\ 보\ 호\ 학\ 과}
-         %\newcommand{\@deptNameKor}{정보보호학과}
-         \newcommand{\@deptNameShort}{정보보호학}
-         \newcommand{\@degreeName}{정보보호學}} {}
+        {\newcommand{\@deptNameEng}{Information Security}} {}
 }
 \@onlypreamble{\department}
 
@@ -342,6 +354,19 @@
     \ifthenelse{\equal{#1}{5}}{\newcommand{\@refereeFifth} {#2}} {}%
 }
 \@onlypreamble{\referee}
+
+% @command keywords 초록 하단 주요어(keywords) - 규정상 영문/국문 초록 모두 필수 항목
+% #1 영문 주요어, #2(선택) 국문 주요어(주제어) - krabst(국문초록)에만 사용되며,
+% 생략시 영문 주요어를 그대로 사용한다.
+\NewDocumentCommand{\keywords}{m o}{
+  \newcommand{\@keywordsEng}{#1}
+  \IfValueTF{#2}{
+    \newcommand{\@keywordsKor}{#2}
+  }{
+    \newcommand{\@keywordsKor}{#1}
+  }
+}
+\@onlypreamble{\keywords}
 
 % @command graduateDate 졸업년월
 \newcommand{\graduateDate}[2]{
@@ -468,6 +493,24 @@
 }
 \@onlypreamble{\addBibHeader}
 
+% @command includeDedication 감사의 글(Dedication page, 선택) 추가 - dedication.tex 사용
+\newcommand{\includeDedication} {
+  \@isDedicationtrue
+}
+\@onlypreamble{\includeDedication}
+
+% @command includePreface 서문(Preface, 필요시) 추가 - preface.tex 사용
+\newcommand{\includePreface} {
+  \@isPrefacetrue
+}
+\@onlypreamble{\includePreface}
+
+% @command includeNomenclature 기호설명(Nomenclature, 선택) 추가 - nomenclature.tex 사용
+\newcommand{\includeNomenclature} {
+  \@isNomenclaturetrue
+}
+\@onlypreamble{\includeNomenclature}
+
 % @command 본문 추가
 \newcommand{\addContents}[1]{
   \setlength\parindent{5mm}
@@ -488,21 +531,13 @@
 %%
 \newcommand{\checkparameters}{%
     \@ifundefined{@titleEng}{%
-        \ClassError{KUThesis}{The English title is not found}{}}{}
-    \@ifundefined{@titleKor}{%
-        \ClassError{KUThesis}{The English title is not found}{}}{}
-    \@ifundefined{@authorKorSpace}{%
-        \ClassError{KUThesis}{The Korean name of the author is not found}{}}{}
-    \@ifundefined{@authorChn}{%
-        \ClassError{KUThesis}{The Chinese name of the author is not found}{}}{}
+        \ClassError{KUThesis}{The title is not found}{}}{}
     \@ifundefined{@authorEng}{%
-        \ClassError{KUThesis}{The English name of the author is not found}{}}{}
-    \@ifundefined{@advisorMajorKor}{%
-        \ClassError{KUThesis}{The Korean name of the major advisor is not found}{}}{}
+        \ClassError{KUThesis}{The name of the author is not found}{}}{}
     \@ifundefined{@advisorMajorEng}{%
-        \ClassError{KUThesis}{The English name of the major advisor is not found}{}}{}
-    \@ifundefined{@advisorMajorChn}{%
-        \ClassError{KUThesis}{The Chinese name of the major advisor is not found}{}}{}
+        \ClassError{KUThesis}{The name of the major advisor is not found}{}}{}
+    \@ifundefined{@keywordsEng}{%
+        \ClassWarning{KUThesis}{No \string\keywords\space defined - the regulation requires keywords at the bottom of the abstract}}{}
 }
 
 %%
@@ -589,46 +624,7 @@
     \addevenpage
 }
 
-%%
-%% 속표지 생성
-%%
-\newcommand{\makeKortitle}{%
-    \newpage
-    \renewcommand{\baselinestretch}{1.3}%
-    \thispagestyle{empty}
-    \hspace*{-15mm}\begin{minipage}[t][16pt][t]{142mm}
-      \begin{center}
-        \fontsize{16pt}{16pt}\selectfont\bf{\@advisorMajorKor\ 교수지도}
-        \\[5mm]
-        \fontsize{16pt}{16pt}\selectfont\bf{\@degreeKor\ 사\ 학\ 위\ 논\ 문}
-        \\[30mm]
-        \fontsize{\@titleSize}{\@titleSize}\selectfont{\bf \@titleEng}
-      \end{center}
-    \end{minipage}\vfill
-    \begin{minipage}[b][110mm][b]{112mm}
-      \begin{center}
-        \if@isLongDeptName
-          \fontsize{15pt}{15pt}\selectfont{\bf 이 논문을 \@deptNameShort}\\
-          \fontsize{15pt}{15pt}\selectfont{\bf {\@degreeKor}사학위 논문으로 제출함}
-          \\[25mm]
-        \else
-          \fontsize{15pt}{15pt}\selectfont{\bf 이 논문을 \@deptNameShort{ }{\@degreeKor}사학위 논문으로 제출함}
-          \\[30mm]
-        \fi
-        \fontsize{14pt}{14pt}\selectfont{\bf {\@submitYear}년\ {\@submitMonth}월}
-        \\[30mm]
-        \fontsize{\@univSize}{\@univSize}\selectfont{\bf 고\ 려\ 대\ 학\ 교\ 대\ 학\ 원}
-        \\[5mm]
-        \fontsize{16pt}{16pt}\selectfont{\bf {\@deptNameKor}}
-        \\[10mm]
-        \fontsize{16pt}{16pt}\selectfont{\bf {\@authorKorSpace}}
-        \fontsize{14pt}{14pt}\selectfont{\bf \hspace{10mm} (印)}
-      \end{center}
-    \end{minipage}
-    \addevenpage
-}
-
-% 영어 속표지
+% 영어 속표지 (규정상 속표지는 논문 작성 언어(영문)로 작성 가능하므로 국문 속표지는 생략)
 \newcommand{\makeEngtitle}{%
     \newpage
     \renewcommand{\baselinestretch}{1.3}%
@@ -700,30 +696,28 @@
         
         \fontsize{14pt}{14pt}\selectfont{ {\@approvalMonthEng}\ {\@approvalYear}}
         \\[20mm]
-        \underline{\hspace{7cm}}
+        % 위원 이름을 콜론(:) 기준으로 가지런히 정렬 (좌측 라벨 폭 고정)
+        \underline{\hspace{8.5cm}}
         \\[1.5mm]
-        \fontsize{14pt}{14pt}\selectfont{\hspace{20mm} Committee Chair: {\@refereeChief}} \raggedright
-        \fontsize{14pt}{14pt}
+        \fontsize{14pt}{14pt}\selectfont{\makebox[8.5cm][l]{\makebox[3.6cm][r]{Committee Chair}: {\@refereeChief}}}
         \\[10mm]
-        \underline{\hspace{7cm}} \centering
+        \underline{\hspace{8.5cm}}
         \\[1.5mm]
-        \fontsize{14pt}{14pt}\selectfont{\hspace{20mm} Committee Member: {\@refereeSecond}} \raggedright
-        \fontsize{14pt}{14pt}
+        \fontsize{14pt}{14pt}\selectfont{\makebox[8.5cm][l]{\makebox[3.6cm][r]{Committee Member}: {\@refereeSecond}}}
         \\[10mm]
-        \underline{\hspace{7cm}} \centering
+        \underline{\hspace{8.5cm}}
         \\[1.5mm]
-        \fontsize{14pt}{14pt}\selectfont{\hspace{20mm} Committee Member: {\@refereeThird}} \raggedright
-        \fontsize{14pt}{14pt}
-        \\[10mm]        
-        
+        \fontsize{14pt}{14pt}\selectfont{\makebox[8.5cm][l]{\makebox[3.6cm][r]{Committee Member}: {\@refereeThird}}}
+        \\[10mm]
+
         \if@isDoctor
-          \underline{\hspace{7cm}} \centering
+          \underline{\hspace{8.5cm}}
           \\[1.5mm]
-          \fontsize{14pt}{14pt}\selectfont{\hspace{20mm} Committee Member: {\@refereeFourth}} \raggedright
+          \fontsize{14pt}{14pt}\selectfont{\makebox[8.5cm][l]{\makebox[3.6cm][r]{Committee Member}: {\@refereeFourth}}}
           \\[10mm]
-          \underline{\hspace{7cm}} \centering
+          \underline{\hspace{8.5cm}}
           \\[1.5mm]
-          \fontsize{14pt}{14pt}\selectfont{\hspace{20mm} Committee Member: {\@refereeFifth}} \raggedright
+          \fontsize{14pt}{14pt}\selectfont{\makebox[8.5cm][l]{\makebox[3.6cm][r]{Committee Member}: {\@refereeFifth}}}
         \else\fi
       \end{center}
     \end{minipage}
@@ -745,14 +739,28 @@
   \addcontentsline{toc}{chapter}{Abstract}
   \pagenumbering{roman}
   \vspace*{\fill}
+  % 규정상 초록에는 논문제목, 성명, 학과, 지도교수를 기재해야 한다
   \begin{center}
+    \fontsize{16pt}{16pt}\selectfont{\@titleEng}
+    \\[5mm]
+    \fontsize{13pt}{13pt}\selectfont{by \@authorEng}
+    \\[1mm]
+    \fontsize{13pt}{13pt}\selectfont{Department of \@departmentNameEng}
+    \\[1mm]
+    \fontsize{13pt}{13pt}\selectfont{under the supervision of Professor \@advisorMajorEng}
+    \\[8mm]
     \fontsize{16pt}{16pt}\selectfont{\bf Abstract}
   \end{center}
 
   \setlength\parindent{5mm}
   \renewcommand{\baselinestretch}{\@abstractLineRatio}\selectfont
-  \fontsize{11pt}{12pt}\selectfont{\indent\input{abstract/abstract}}
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{abstract/abstract}\par}
   \setlength\parindent{0mm}
+  \vspace{8mm}
+  % 규정상 초록 하단에 주요어(keywords)를 표기해야 한다
+  \@ifundefined{@keywordsEng}{}{
+    \fontsize{11pt}{12pt}\selectfont{\noindent\textbf{Keywords}: \@keywordsEng}
+  }
   \vspace*{\fill}
   \addevenpage
 }
@@ -779,8 +787,13 @@
 
   \setlength\parindent{5mm}
   \renewcommand{\baselinestretch}{\@krAbstractLineRatio}\selectfont
-  \fontsize{11pt}{12pt}\selectfont{\indent\input{abstract/abstract-kr}}
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{abstract/abstract-kr}\par}
   \setlength\parindent{0mm}
+  \vspace{8mm}
+  % 규정상 국문초록 하단에도 주제어(keywords)를 표기해야 한다
+  \@ifundefined{@keywordsKor}{}{
+    \fontsize{11pt}{12pt}\selectfont{\noindent\textbf{주제어}: \@keywordsKor}
+  }
   \vspace*{\fill}
   \addevenpage
 }
@@ -799,11 +812,66 @@
   \renewcommand{\baselinestretch}{\@TOCLineRatio}\selectfont
   \tableofcontents
   \addevenpage
-  \listoffigures
-  \addevenpage
+  % 규정상 순서: 표 목차(List of Tables) -> 그림 목차(List of Figures)
   \listoftables
   \addevenpage
+  \listoffigures
+  \addevenpage
   \clearpage
+}
+
+%%
+%% 감사의 글 (Dedication page) 생성 - 규정상 제목 없이 페이지 중앙에 배치, 목차에는 표시하지 않음
+%%
+\newcommand{\makededication}{%
+  \newpage
+  \thispagestyle{empty}
+  \vspace*{\fill}
+  \begin{center}
+    \setlength\parindent{5mm}
+    \fontsize{11pt}{12pt}\selectfont{\input{dedication}}
+    \setlength\parindent{0mm}
+  \end{center}
+  \vspace*{\fill}
+  \addevenpage
+}
+
+%%
+%% 서문 (Preface) 생성
+%%
+\newcommand{\makepreface}{%
+  \newpage
+  \thispagestyle{empty}
+  \addcontentsline{toc}{chapter}{Preface}
+  \begin{center}
+    \fontsize{16pt}{16pt}\selectfont{\bf Preface}
+  \end{center}
+  \vspace{5mm}
+
+  \setlength\parindent{5mm}
+  \renewcommand{\baselinestretch}{\@acknowledgementLineRatio}\selectfont
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{preface}}
+  \setlength\parindent{0mm}
+  \addevenpage
+}
+
+%%
+%% 기호설명 (Nomenclature) 생성
+%%
+\newcommand{\makenomenclature}{%
+  \newpage
+  \thispagestyle{empty}
+  \addcontentsline{toc}{chapter}{Nomenclature}
+  \begin{center}
+    \fontsize{16pt}{16pt}\selectfont{\bf Nomenclature}
+  \end{center}
+  \vspace{5mm}
+
+  \setlength\parindent{5mm}
+  \renewcommand{\baselinestretch}{\@acknowledgementLineRatio}\selectfont
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{nomenclature}}
+  \setlength\parindent{0mm}
+  \addevenpage
 }
 
 %%
@@ -812,18 +880,10 @@
 \newcommand{\makeacknowledgement}{%
   \newpage
   \thispagestyle{empty}
-  \if@isKrack
-    \addcontentsline{toc}{chapter}{감사의글}
-  \else
-    \addcontentsline{toc}{chapter}{Acknowledgement}
-  \fi
+  \addcontentsline{toc}{chapter}{Acknowledgement}
   %\pagenumbering{gobble}
   \begin{center}
-    \if@isKrack
-      \fontsize{16pt}{16pt}\selectfont{\bf 감사의글}
-    \else
-      \fontsize{16pt}{16pt}\selectfont{\bf Acknowledgement}
-    \fi
+    \fontsize{16pt}{16pt}\selectfont{\bf Acknowledgement}
   \end{center}
   \vspace{5mm}
 

@@ -1,4 +1,5 @@
 build/
+thesis.pdf
 *.aux
 *.log
 *.lof
