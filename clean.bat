@@ -1,1 +1,2 @@
-del *.aux *.log *.lof *.lot *.out *.toc *.bbl *.blg *.pdf
+if exist build rmdir /s /q build
+if exist thesis.pdf del thesis.pdf

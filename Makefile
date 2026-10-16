@@ -1,9 +1,12 @@
 thesis:
-	@pdflatex $@
-	@bibtex $@
-	@pdflatex $@
-	@pdflatex $@
-	@pdflatex $@
+	@mkdir -p build
+	@pdflatex -output-directory=build $@
+	@bibtex build/$@
+	@pdflatex -output-directory=build $@
+	@pdflatex -output-directory=build $@
+	@pdflatex -output-directory=build $@
+	@cp build/$@.pdf .
 
 clean:
-	rm -rf *.aux *.log *.lof *.lot *.out *.toc *.bbl *.blg *.pdf
+	rm -rf build
+	rm -f thesis.pdf

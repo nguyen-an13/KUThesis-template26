@@ -6,6 +6,12 @@ An unofficial LaTeX template for a Korea University master's thesis / Ph.D. diss
 
 It makes it easy to switch between a master's or doctoral version, double- or single-sided printing, and a dedicated library-submission format, so you spend less time fighting formatting during writing, examination, and submission.
 
+## Disclaimer
+
+This template is provided as a convenience, with no warranty of any kind. The maintainers are not responsible for any issues, rejected submissions, or formatting problems that result from using it. Thesis/dissertation formatting requirements can change, and submission policies may vary by department, program, advisor, or library staff.
+
+**Always check the latest official guidelines with your own department/graduate school before relying on this template, and leave yourself enough time before your submission deadline.** See the [October 2026 Graduate School notice](https://info.korea.ac.kr/info/board/notice_grad.do?mode=view&articleNo=1586594&article.offset=0&articleLimit=10&totalNoticeYn=N&totalBoardNo=) for the most recent update at the time of this fork.
+
 ## Compiling
 
 Tested with `pdflatex`, both on [Overleaf](https://www.overleaf.com) and with a local TeX Live / MacTeX installation (TeX Live 2013 or later).
@@ -69,9 +75,3 @@ Further references:
 - [KU Nuclear Physics Lab's earlier LaTeX template](https://github.com/KUNPL/KUThesis)
 - [Korea University Graduate School thesis format notice](https://graduate.korea.ac.kr/academic/dissertation.html)
 - [Korea University Graduate School notice board, October 2026](https://info.korea.ac.kr/info/board/notice_grad.do?mode=view&articleNo=1586594&article.offset=0&articleLimit=10&totalNoticeYn=N&totalBoardNo=)
-
-## Disclaimer
-
-This template is provided as a convenience, with no warranty of any kind. The maintainers are not responsible for any issues, rejected submissions, or formatting problems that result from using it. Thesis/dissertation formatting requirements can change, and submission policies may vary by department, program, advisor, or library staff.
-
-**Always check the latest official guidelines with your own department/graduate school before relying on this template, and leave yourself enough time before your submission deadline.** See the [October 2026 Graduate School notice](https://info.korea.ac.kr/info/board/notice_grad.do?mode=view&articleNo=1586594&article.offset=0&articleLimit=10&totalNoticeYn=N&totalBoardNo=) for the most recent update at the time of this fork.
