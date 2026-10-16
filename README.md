@@ -29,10 +29,10 @@ Keeping backups of your work is strongly recommended.
 | `thesis.tex` | Main file - your title, author, advisor, committee, and class options go here. |
 | `abstract/abstract.tex` | English abstract. |
 | `abstract/abstract-kr.tex` | Korean abstract (required by regulation, even for an English-language thesis). |
-| `acknowledgement.tex` | Acknowledgments (사사). |
-| `dedication.tex` | Dedication page (감사의 글, optional) - enable with `\includeDedication`. |
-| `preface.tex` | Preface (서문, if necessary) - enable with `\includePreface`. |
-| `nomenclature.tex` | List of symbols/abbreviations (기호설명, optional) - enable with `\includeNomenclature`. |
+| `frontmatter/acknowledgement.tex` | Acknowledgments (사사). |
+| `frontmatter/dedication.tex` | Dedication page (감사의 글, optional) - enable with `\includeDedication`. |
+| `frontmatter/preface.tex` | Preface (서문, if necessary) - enable with `\includePreface`. |
+| `frontmatter/nomenclature.tex` | List of symbols/abbreviations (기호설명, optional) - enable with `\includeNomenclature`. |
 | `chapters/1.how-to-use.tex` | This template's own usage guide, written as a sample chapter - replace it with your real content. |
 | `chapters/format-eng.tex` | A longer sample chapter demonstrating headings, tables, figures, equations, citations, etc. - also meant to be replaced. |
 | `library.bib` | Your bibliography database (BibTeX). |
@@ -62,7 +62,7 @@ Recommended examples:
 
 - `thesis.tex`: `\title`, `\author`, `\advisor`, `\graduateSchool`, `\graduateDate`, `\submitDate`, `\approvalDate`, `\referee`, `\keywords`
 - `abstract/abstract.tex` and `abstract/abstract-kr.tex`: your English and Korean abstracts
-- `dedication.tex`, `preface.tex`, `nomenclature.tex`: only if you enable the matching `\include...` command
+- `frontmatter/dedication.tex`, `frontmatter/preface.tex`, `frontmatter/nomenclature.tex`: only if you enable the matching `\include...` command
 - Replace the placeholder chapters under `chapters/` with your actual content
 
 If the automatic line breaks in `KUThesis.cls` look awkward for a particularly long name, title, or department, you may need to manually adjust line breaks (`\\`) or font sizes in the relevant macro.

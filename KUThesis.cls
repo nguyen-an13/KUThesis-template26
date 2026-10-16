@@ -833,7 +833,7 @@
   \vspace*{\fill}
   \begin{center}
     \setlength\parindent{5mm}
-    \fontsize{11pt}{12pt}\selectfont{\input{dedication}}
+    \fontsize{11pt}{12pt}\selectfont{\input{frontmatter/dedication}}
     \setlength\parindent{0mm}
   \end{center}
   \vspace*{\fill}
@@ -854,7 +854,7 @@
 
   \setlength\parindent{5mm}
   \renewcommand{\baselinestretch}{\@acknowledgementLineRatio}\selectfont
-  \fontsize{11pt}{12pt}\selectfont{\indent\input{preface}}
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{frontmatter/preface}}
   \setlength\parindent{0mm}
   \addevenpage
 }
@@ -873,7 +873,7 @@
 
   \setlength\parindent{5mm}
   \renewcommand{\baselinestretch}{\@acknowledgementLineRatio}\selectfont
-  \fontsize{11pt}{12pt}\selectfont{\indent\input{nomenclature}}
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{frontmatter/nomenclature}}
   \setlength\parindent{0mm}
   \addevenpage
 }
@@ -893,7 +893,7 @@
 
   \setlength\parindent{5mm}
   \renewcommand{\baselinestretch}{\@acknowledgementLineRatio}\selectfont
-  \fontsize{11pt}{12pt}\selectfont{\indent\input{acknowledgement}}
+  \fontsize{11pt}{12pt}\selectfont{\indent\input{frontmatter/acknowledgement}}
   \setlength\parindent{0mm}
   \addevenpage
 }
