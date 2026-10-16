@@ -1,6 +1,8 @@
 # KUThesis (Lab Edition)
 
-An unofficial LaTeX template for a Korea University master's thesis / Ph.D. dissertation, based on the 2022 official Korea University Graduate School guidelines. This copy has been adapted into an **English-only** internal starting point: fill in your own details, replace the placeholder chapters, and you're off.
+**Lab Edition — forked and updated: October 2026**, based on [KUThesis2022](https://github.com/hyeonleee/KUThesis2022) by Suhyeon Lee.
+
+An unofficial LaTeX template for a Korea University master's thesis / Ph.D. dissertation, based on the official Korea University Graduate School guidelines (the regulation document itself is dated October 2022, last revised December 2022, and was still the current standard as of this fork). This copy has been adapted into an **English-only** internal starting point: fill in your own details, replace the placeholder chapters, and you're off.
 
 It makes it easy to switch between a master's or doctoral version, double- or single-sided printing, and a dedicated library-submission format, so you spend less time fighting formatting during writing, examination, and submission.
 

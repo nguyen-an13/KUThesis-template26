@@ -11,6 +11,10 @@
 %%         제작 일자 : 2022. 12. 25
 %%         업데이트  : 2022. 12. 25
 %%
+%%         Lab Edition (English-only fork): Nguyen Van An
+%%               - git : https://github.com/nguyen-an13/KUThesis-template26
+%%               - forked & updated : 2026. 10
+%%
 %%
 %%         참고자료: 1. KAIST Thesis Templete for LaTeX version 0.4 
 %%                 2. KU Thesis Template for Latex version 2.11 (제작자: 장진희, https://github.com/KUNPL/KUThesis)
